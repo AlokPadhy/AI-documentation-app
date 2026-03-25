@@ -9,16 +9,14 @@ load_dotenv()
 app = Flask(__name__, static_folder="build", static_url_path="")
 CORS(app)
 
-# ✅ Load API key
 api_key = os.getenv("GROQ_API_KEY")
 
 if not api_key:
-    raise ValueError("GROQ_API_KEY not found")
+    raise ValueError("API key not found")
 
 client = Groq(api_key=api_key)
 
 
-# ✅ API ROUTE
 @app.route("/generate", methods=["POST"])
 def generate():
     try:
@@ -29,21 +27,14 @@ def generate():
             return jsonify({"error": "Topic is required"}), 400
 
         response = client.chat.completions.create(
-            model="mixtral-8x7b-32768",  # ✅ working model
+            model="llama-3.3-70b-versatile",
             messages=[
-                {
-                    "role": "system",
-                    "content": "You are a professional documentation writer. Use headings, bullet points, and structured format."
-                },
-                {
-                    "role": "user",
-                    "content": f"Generate detailed documentation about {topic}"
-                }
+                {"role": "system", "content": "You are a professional documentation writer."},
+                {"role": "user", "content": f"Generate detailed documentation about {topic}"}
             ]
         )
 
         content = response.choices[0].message.content
-
         return jsonify({"result": content})
 
     except Exception as e:
@@ -55,7 +46,6 @@ def generate():
 @app.route("/")
 def serve():
     return send_from_directory(app.static_folder, "index.html")
-
 
 @app.route("/<path:path>")
 def static_files(path):

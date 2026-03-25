@@ -9,7 +9,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
 
-  // 🔥 PARAGRAPH-WISE TYPING (FAST & SMOOTH)
+  // 🚀 PARAGRAPH TYPING (NO FLICKER)
   useEffect(() => {
     if (!result) return;
 
@@ -19,18 +19,18 @@ function App() {
     setDisplayText("");
 
     const interval = setInterval(() => {
-      if (index < paragraphs.length) {
-        setDisplayText((prev) => prev + paragraphs[index] + "\n\n");
-        index++;
-      } else {
+      setDisplayText((prev) => prev + paragraphs[index] + "\n\n");
+      index++;
+
+      if (index >= paragraphs.length) {
         clearInterval(interval);
       }
-    }, 800); // 👉 speed control (800ms per paragraph)
+    }, 2000); // ⏱️ 2 sec per paragraph
 
     return () => clearInterval(interval);
   }, [result]);
 
-  // 🚀 GENERATE DOCUMENT
+  // 🚀 Generate document
   const generateDoc = async () => {
     if (!topic) {
       alert("Enter a topic");
@@ -51,13 +51,22 @@ function App() {
       });
 
       const data = await response.json();
+      console.log(data);
 
       if (data.error) {
-        alert(data.error);
-      } else {
-        setResult(data.result);
-        setHistory([{ topic, content: data.result }, ...history]);
+        alert("Error: " + data.error);
+        setLoading(false);
+        return;
       }
+
+      // ✅ DELAY to avoid instant render flicker
+      setTimeout(() => {
+        setResult(data.result);
+      }, 300);
+
+      // Save to history
+      setHistory([{ topic, content: data.result }, ...history]);
+
     } catch (error) {
       alert("Backend error!");
     }
@@ -65,7 +74,7 @@ function App() {
     setLoading(false);
   };
 
-  // 📄 DOWNLOAD PDF
+  // 📄 Download PDF
   const downloadPDF = () => {
     const doc = new jsPDF();
     doc.text(result, 10, 10);
@@ -88,7 +97,10 @@ function App() {
         {history.map((item, index) => (
           <div
             key={index}
-            onClick={() => setResult(item.content)}
+            onClick={() => {
+              setResult(item.content);
+              setDisplayText(item.content); // instant show
+            }}
             style={{
               cursor: "pointer",
               padding: "10px",
@@ -142,7 +154,7 @@ function App() {
           Download PDF
         </button>
 
-        {loading && <p>⏳ Generating...</p>}
+        {loading && <p>⏳ AI is thinking...</p>}
 
         {/* 📄 OUTPUT */}
         <div style={{
@@ -157,7 +169,7 @@ function App() {
         }}>
           <div
             dangerouslySetInnerHTML={{
-              __html: marked(displayText),
+              __html: marked(displayText), // ✅ ONLY displayText (no flicker)
             }}
           />
         </div>
