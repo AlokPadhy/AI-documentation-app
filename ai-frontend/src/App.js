@@ -9,7 +9,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
 
-  // 🚀 PARAGRAPH TYPING (NO FLICKER)
+  // 🔥 PARAGRAPH-WISE TYPING (FAST & SMOOTH)
   useEffect(() => {
     if (!result) return;
 
@@ -19,18 +19,18 @@ function App() {
     setDisplayText("");
 
     const interval = setInterval(() => {
-      setDisplayText((prev) => prev + paragraphs[index] + "\n\n");
-      index++;
-
-      if (index >= paragraphs.length) {
+      if (index < paragraphs.length) {
+        setDisplayText((prev) => prev + paragraphs[index] + "\n\n");
+        index++;
+      } else {
         clearInterval(interval);
       }
-    }, 2000); // ⏱️ 2 sec per paragraph
+    }, 800); // 👉 speed control (800ms per paragraph)
 
     return () => clearInterval(interval);
   }, [result]);
 
-  // 🚀 Generate document
+  // 🚀 GENERATE DOCUMENT
   const generateDoc = async () => {
     if (!topic) {
       alert("Enter a topic");
@@ -42,7 +42,7 @@ function App() {
     setDisplayText("");
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/generate", {
+      const response = await fetch("/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -51,22 +51,13 @@ function App() {
       });
 
       const data = await response.json();
-      console.log(data);
 
       if (data.error) {
-        alert("Error: " + data.error);
-        setLoading(false);
-        return;
-      }
-
-      // ✅ DELAY to avoid instant render flicker
-      setTimeout(() => {
+        alert(data.error);
+      } else {
         setResult(data.result);
-      }, 300);
-
-      // Save to history
-      setHistory([{ topic, content: data.result }, ...history]);
-
+        setHistory([{ topic, content: data.result }, ...history]);
+      }
     } catch (error) {
       alert("Backend error!");
     }
@@ -74,7 +65,7 @@ function App() {
     setLoading(false);
   };
 
-  // 📄 Download PDF
+  // 📄 DOWNLOAD PDF
   const downloadPDF = () => {
     const doc = new jsPDF();
     doc.text(result, 10, 10);
@@ -97,10 +88,7 @@ function App() {
         {history.map((item, index) => (
           <div
             key={index}
-            onClick={() => {
-              setResult(item.content);
-              setDisplayText(item.content); // instant show
-            }}
+            onClick={() => setResult(item.content)}
             style={{
               cursor: "pointer",
               padding: "10px",
@@ -154,7 +142,7 @@ function App() {
           Download PDF
         </button>
 
-        {loading && <p>⏳ AI is thinking...</p>}
+        {loading && <p>⏳ Generating...</p>}
 
         {/* 📄 OUTPUT */}
         <div style={{
@@ -169,7 +157,7 @@ function App() {
         }}>
           <div
             dangerouslySetInnerHTML={{
-              __html: marked(displayText), // ✅ ONLY displayText (no flicker)
+              __html: marked(displayText),
             }}
           />
         </div>

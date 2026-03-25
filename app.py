@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from groq import Groq
 import os
@@ -6,17 +6,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="build", static_url_path="")
 CORS(app)
 
-# ✅ Load API key safely
+# ✅ Load API key
 api_key = os.getenv("GROQ_API_KEY")
 
 if not api_key:
-    raise ValueError("API key not found. Check .env file")
+    raise ValueError("GROQ_API_KEY not found")
 
 client = Groq(api_key=api_key)
 
+
+# ✅ API ROUTE
 @app.route("/generate", methods=["POST"])
 def generate():
     try:
@@ -27,7 +29,7 @@ def generate():
             return jsonify({"error": "Topic is required"}), 400
 
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",   # ✅ stable model
+            model="mixtral-8x7b-32768",  # ✅ working model
             messages=[
                 {
                     "role": "system",
@@ -49,5 +51,16 @@ def generate():
         return jsonify({"error": str(e)}), 500
 
 
+# ✅ SERVE FRONTEND
+@app.route("/")
+def serve():
+    return send_from_directory(app.static_folder, "index.html")
+
+
+@app.route("/<path:path>")
+def static_files(path):
+    return send_from_directory(app.static_folder, path)
+
+
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run()
