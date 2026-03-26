@@ -18,21 +18,25 @@ def serve():
 def generate():
     try:
         data = request.get_json()
-        prompt = data.get("prompt")
+        topic = data.get("topic")
+
+        # ✅ FIX: Check empty input
+        if not topic or topic.strip() == "":
+            return jsonify({"error": "Topic is required"}), 400
 
         response = client.chat.completions.create(
-            model="llama3-70b-8192",
+            model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": "You are a professional documentation writer."},
+                {"role": "user", "content": f"Generate documentation about {topic}"}
             ]
         )
 
         return jsonify({
-            "content": response.choices[0].message.content
+            "result": response.choices[0].message.content
         })
 
     except Exception as e:
-        print("ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
 
 
